@@ -4,9 +4,13 @@ const path = require('path');
 
 const videoUploader = async (videoName, videoUrl) => {
     // Local path where you want to save the video
-    const saveVideo = path.join(__dirname, 'downloads', `${videoName}`);
+
+    const downloadDir = path.join(__dirname, 'downloads');
 
     try {
+        await fs.mkdir(downloadDir, { recursive: true });
+
+        const saveVideo = path.join(__dirname, 'downloads', `${videoName}`);
         const response = await axios.get(videoUrl, { responseType: 'stream' });
 
         const videoStream = fs.createWriteStream(saveVideo);
