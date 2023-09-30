@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { videoUploader } = require('../utils/cloudinary');
+const { videoUploader } = require('../utils/videoUploader');
 const { StatusCodes } = require('http-status-codes')
 const { BadRequestError, NotFoundError } = require('../errors')
 const video = require('../models/video.model');
@@ -9,26 +9,24 @@ const SITEURL = process.env.SITEURL;
 
 const uploadVideo = async (req, res, next) => {
     try {
-        if (!req.file) {
-            throw new BadRequestError('Please provide a file');
+        const videoUrl = req.body.videoUrl;
+        if (!videoUrl) {
+            throw new BadRequestError('Please provide a video');
         }
         const timeStamp = Date.now()
-        const path = req.file.path;
-        const videoLink = await videoUploader(timeStamp, path);
-        const videoName = `untitled_video_${timeStamp}`
-        const videoTranscript = await downloadAndTranscribe(videoLink);
+        const videoName = `untitled_video_${timeStamp}.mp4`
+        await videoUploader(videoName, videoUrl);
+        const videoTranscript = await downloadAndTranscribe(videoUrl);
         let dataToSave = {
             videoName,
             publicLink: `${SITEURL}/${videoName}`,
-            videoUrl: videoLink,
+            videoUrl,
             videoTranscript,
         }
         const saveVideo = await video.create(dataToSave);
         res.status(StatusCodes.CREATED).json({
             status: "success",
-            videoName: videoName,
-            videoUrl: dataToSave.publicLink,
-            transcript: videoTranscript
+            video: saveVideo,
         })
     } catch (error) {
         console.log(error);
@@ -43,8 +41,9 @@ const getVideo = async (req, res, next) => {
         if (!videoDetails) {
             throw new NotFoundError("File Not Found");
         }
-        const Video = videoDetails.videoUrl;
-        res.status(StatusCodes.OK).json({ status: "success", Video })
+        res.status(StatusCodes.OK).json({
+             status: "success", 
+             video: videoDetails })
     } catch (error) {
         next(error);
     }
