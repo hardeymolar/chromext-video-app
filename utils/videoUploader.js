@@ -8,7 +8,7 @@ const videoUploader = async (videoName, videoUrl) => {
     const downloadDir = path.join(__dirname, 'downloads');
 
     try {
-        await fs.mkdir(downloadDir, { recursive: true });
+        fs.mkdirSync(downloadDir, { recursive: true });
 
         const saveVideo = path.join(__dirname, 'downloads', `${videoName}`);
         const response = await axios.get(videoUrl, { responseType: 'stream' });
